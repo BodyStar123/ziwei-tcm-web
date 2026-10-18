@@ -1,5 +1,5 @@
 import streamlit as st
-from lunar＿python import Solar
+from lunar_python import Solar
 from google import genai
 
 st.set_page_config(page_title="紫微斗數 × 中醫經絡智慧排盤系統", layout="centered")
@@ -228,49 +228,57 @@ if st.button("✨ 開始排盤與解析", type="primary"):
             chart_summary.append(f"【{organ_str}】宮位屬性: {palace_str}{tag_str} | 駐守星曜與病理: {', '.join(star_details)}")
 
         # ==========================================
-        # 7. AI 智慧中醫經絡命理整體解讀
+        # 7. AI 智慧中醫經絡命理整體解讀 (防閃退安全表單版)
         # ==========================================
         st.markdown("---")
         st.subheader("🤖 AI 智慧中醫經絡命理整體解讀")
-        user_question = st.text_input("你想特別請教 AI 什麼方向？", value="請針對這張經絡命盤進行整體身心氣機與體質傾向的深度綜合分析")
 
-        if st.button("🔮 請 AI 進行臨床中醫經絡綜合解讀", type="primary"):
+        with st.form(key="ai_form"):
+            user_question = st.text_input("你想特別請教 AI 什麼方向？", value="請針對這張經絡命盤進行整體身心氣機與體質傾向的深度綜合分析")
+            submit_button = st.form_submit_button(label="🔮 請 AI 進行臨床中醫經絡綜合解讀", type="primary")
+
+        if submit_button:
             with st.spinner("AI 正在結合紫微星象與中醫經絡學理，為您深度解析中..."):
-                full_chart_text = "\n".join(chart_summary)
-                prompt = f"""
-                你是一位融合了「傳統紫微斗數象數推演」與「中醫學理、經絡氣機、身心病機」的頂尖中醫師與命理專家。
-                現在有一位使用者的紫微斗數經絡命盤數據如下：
-                
-                【基本生辰】
-                生年干支：{year_gan}年 | 五行局：{bureau_name}
-                命宮位置：{branches[life_palace_index]}宮 | 身宮位置：{branches[body_palace_index]}宮
-                
-                【十二經絡與星曜病理分佈】
-                {full_chart_text}
-                
-                【使用者的提問或關注點】
-                {user_question}
-                
-                請根據以上數據，以專業、溫暖且具臨床洞察力的語氣，提供一份結構化的整體解讀報告，包含：
-                1. **先天體質與氣機樞紐分析**（結合命身宮與五行局的整體氣血特質）。
-                2. **核心病理與經絡卡點**（特別指出受煞曜或化忌影響、容易出現功能失調的經絡與臟腑）。
-                3. **身心互動與潛在傾向**（星曜象數如何對應到情緒、壓力模式或生理表現）。
-                4. **日常中醫養生與調理建議**（飲食、作息、情志調節等具體方向）。
-                
-                請使用繁體中文回答，排版清晰易讀。
-                """
+                try:
+                    full_chart_text = "\n".join(chart_summary)
+                    prompt = f"""
+                    你是一位融合了「傳統紫微斗數象數推演」與「中醫學理、經絡氣機、身心病機」的頂尖中醫師與命理專家。
+                    現在有一位使用者的紫微斗數經絡命盤數據如下：
+                    
+                    【基本生辰】
+                    生年干支：{year_gan}年 | 五行局：{bureau_name}
+                    命宮位置：{branches[life_palace_index]}宮 | 身宮位置：{branches[body_palace_index]}宮
+                    
+                    【十二經絡與星曜病理分佈】
+                    {full_chart_text}
+                    
+                    【使用者的提問或關注點】
+                    {user_question}
+                    
+                    請根據以上數據，以專業、溫暖且具臨床洞察力的語氣，提供一份結構化的整體解讀報告，包含：
+                    1. **先天體質與氣機樞紐分析**（結合命身宮與五行局的整體氣血特質）。
+                    2. **核心病理與經絡卡點**（特別指出受煞曜或化忌影響、容易出現功能失調的經絡與臟腑）。
+                    3. **身心互動與潛在傾向**（星曜象數如何對應到情緒、壓力模式或生理表現）。
+                    4. **日常中醫養生與調理建議**（飲食、作息、情志調節等具體方向）。
+                    
+                    請使用繁體中文回答，排版清晰易讀。
+                    """
 
-                api_key = st.secrets["GEMINI_API_KEY"]
-                client = genai.Client(api_key=api_key)
-                response = client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=prompt
-                )
+                    api_key = st.secrets["GEMINI_API_KEY"]
+                    client = genai.Client(api_key=api_key)
+                    
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=prompt
+                    )
 
-                st.success("分析完成！")
-                st.markdown("### 📋 AI 臨床中醫經絡命理綜合報告")
-                st.markdown(response.text)
+                    st.success("分析完成！")
+                    st.markdown("### 📋 AI 臨床中醫經絡命理綜合報告")
+                    st.markdown(response.text)
+
+                except Exception as ai_err:
+                    st.error(f"AI 呼叫失敗，請檢查 API Key 是否正確。錯誤訊息：{ai_err}")
 
     except Exception as e:
         st.error(f"計算過程發生錯誤或 API Key 未正確設定：{e}")
-
+        
