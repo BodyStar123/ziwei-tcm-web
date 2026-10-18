@@ -1,5 +1,5 @@
 import streamlit as st
-from lunar-python import Solar
+from lunar＿python import Solar
 from google import genai
 
 st.set_page_config(page_title="紫微斗數 × 中醫經絡智慧排盤系統", layout="centered")
